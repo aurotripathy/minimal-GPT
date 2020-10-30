@@ -10,6 +10,8 @@ V100    - Training elapsed time (in millisec): 40867.45703125
 
 The next step is to [AMP'ify](https://developer.nvidia.com/automatic-mixed-precision) the compute. 
 
+Also study [the tuned version](https://github.com/BlinkDL/minGPT-tuned)
+
 # minGPT
 
 ![mingpt](mingpt.jpg)
