@@ -4,8 +4,8 @@ FP32 results with `CUDA_VISIBLE_DEVICES=0 python3 play_math.py` and `HIP_VISIBLE
 
 ```
 2080 TI - Training elapsed time (in millisec): 30975.037109375
-MI100 - Training elapsed time (in millisec): 42535.93359375
-V100 Training elapsed time (in millisec): 40867.45703125
+MI100   - Training elapsed time (in millisec): 42535.93359375
+V100    - Training elapsed time (in millisec): 40867.45703125
 ```
 # minGPT
 
