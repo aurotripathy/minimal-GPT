@@ -95,14 +95,22 @@ model = GPT(mconf)
 from mingpt.trainer import Trainer, TrainerConfig
 
 # initialize a trainer instance and kick off training
-tconf = TrainerConfig(max_epochs=50, batch_size=512, learning_rate=6e-4,
-                      lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
-                      num_workers=4)
-trainer = Trainer(model, train_dataset, test_dataset, tconf)
 
 start = torch.cuda.Event(enable_timing=True)
 end = torch.cuda.Event(enable_timing=True)
 
+print("Warmup round of two epochs...") 
+tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4,
+                      lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
+                      num_workers=4)
+trainer = Trainer(model, train_dataset, test_dataset, tconf)
+trainer.train()
+
+tconf = TrainerConfig(max_epochs=50, batch_size=512, learning_rate=6e-4,
+                      lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
+                      num_workers=4)
+trainer = Trainer(model, train_dataset, test_dataset, tconf)
+print("Actial training of 50 epochs...") 
 start.record()
 trainer.train()
 end.record()
@@ -145,8 +153,8 @@ def give_exam(dataset, batch_size=32, max_batches=-1):
     print("final score: %d/%d = %.2f%% correct" % (np.sum(results), len(results), 100*np.mean(results)))
 
 # training set: how well did we memorize?
-print(give_exam(train_dataset, batch_size=1024, max_batches=10))
+give_exam(train_dataset, batch_size=1024, max_batches=10)
 
 # test set: how well did we generalize?
-print(give_exam(test_dataset, batch_size=1024, max_batches=-1))
+give_exam(test_dataset, batch_size=1024, max_batches=-1)
 
