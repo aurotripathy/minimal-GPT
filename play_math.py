@@ -123,7 +123,7 @@ end.record()
 
 torch.cuda.synchronize()  # Waits for training to finish
 
-print("Elapsed time (in millisec):", start.elapsed_time(end))
+print("Training elapsed time (in millisec):", start.elapsed_time(end))
 
 # now let's give the trained model an addition exam
 from torch.utils.data.dataloader import DataLoader
@@ -157,6 +157,7 @@ def give_exam(dataset, batch_size=32, max_batches=-1):
 
     print("final score: %d/%d = %.2f%% correct" % (np.sum(results), len(results), 100*np.mean(results)))
 
+print("Test Phase...")
 # training set: how well did we memorize?
 give_exam(train_dataset, batch_size=1024, max_batches=10)
 
