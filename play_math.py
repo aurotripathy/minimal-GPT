@@ -5,9 +5,6 @@ logging.basicConfig(
         level=logging.INFO,
 )
 
-# make deterministic
-from mingpt.utils import set_seed
-set_seed(42)
 
 import numpy as np
 import torch
@@ -96,9 +93,6 @@ from mingpt.trainer import Trainer, TrainerConfig
 
 # initialize a trainer instance and kick off training
 
-start = torch.cuda.Event(enable_timing=True)
-end = torch.cuda.Event(enable_timing=True)
-
 print("Warmup round of two epochs...") 
 tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
@@ -106,13 +100,21 @@ tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4,
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
 trainer.train()
 
+# make deterministic
+from mingpt.utils import set_seed
+set_seed(42)
+start = torch.cuda.Event(enable_timing=True)
+end = torch.cuda.Event(enable_timing=True)
+
+print("\nStart training of 50 epochs...\n") 
+start.record()
+
 tconf = TrainerConfig(max_epochs=50, batch_size=512, learning_rate=6e-4,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
-print("\nStart training of 50 epochs...\n") 
-start.record()
 trainer.train()
+
 end.record()
 
 torch.cuda.synchronize()  # Waits for training to finish
