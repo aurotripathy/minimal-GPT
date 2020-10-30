@@ -1,3 +1,4 @@
+Performance measurements on minGPT, since its small and eacy-to-understand.
 
 # minGPT
 
