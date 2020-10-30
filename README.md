@@ -1,4 +1,4 @@
-Performance measurements on minGPT, since its small and easy-to-understand.
+Performance measurements on [minGPT](https://github.com/karpathy/minGPT), since its small and easy-to-understand.
 
 # minGPT
 
