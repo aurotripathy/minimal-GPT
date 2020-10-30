@@ -110,15 +110,14 @@ tconf = TrainerConfig(max_epochs=50, batch_size=512, learning_rate=6e-4,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
-print("Actial training of 50 epochs...") 
+print("\nStart training of 50 epochs...\n") 
 start.record()
 trainer.train()
 end.record()
 
-torch.cuda.synchronize()  # Waits for everything to finish running
+torch.cuda.synchronize()  # Waits for training to finish
 
 print("Elapsed time (in millisec):", start.elapsed_time(end))
-
 
 # now let's give the trained model an addition exam
 from torch.utils.data.dataloader import DataLoader
