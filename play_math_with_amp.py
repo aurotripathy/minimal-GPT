@@ -1,3 +1,8 @@
+"""
+using AMP instructions from here
+https://pytorch.org/blog/accelerating-training-on-nvidia-gpus-with-pytorch-automatic-mixed-precision/
+"""
+
 import logging
 logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
