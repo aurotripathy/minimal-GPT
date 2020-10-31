@@ -31,8 +31,11 @@ class TrainerConfig:
     # checkpoint settings
     ckpt_path = None
     num_workers = 0 # for DataLoader
+    presision = 'FP32'
 
     def __init__(self, **kwargs):
+        if kwargs['precision'] not in ['AMP', 'FP32']:
+            raise
         for k,v in kwargs.items():
             setattr(self, k, v)
 
@@ -82,24 +85,27 @@ class Trainer:
 
                 # forward the model
                 with torch.set_grad_enabled(is_train):
-                    with torch.cuda.amp.autocast():  # cast ops in mixed precision
-                        logits, loss = model(x, y)
-                        loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
-                        losses.append(loss.item())
+                    if config.precision == 'AMP':
+                        with torch.cuda.amp.autocast():  # cast ops in mixed precision
+                            logits, loss = model(x, y)
+                    else:
+                            logits, loss = model(x, y)
+                    loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
+                    losses.append(loss.item())
 
                 if is_train:
-
-                    # backprop and update the parameters
                     model.zero_grad()
-                    # Scales the loss, and calls backward()
-                    # to create scaled gradients
-                    scaler.scale(loss).backward()
-                    # loss.backward()
-                    # torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
-                    # optimizer.step()
-                    scaler.step(optimizer)
-                    # Updates the scale for next iteration
-                    scaler.update()
+                    if config.precision == 'AMP':
+                        # backprop and update the parameters
+                        # Scales the loss, and calls backward() to create scaled gradients
+                        scaler.scale(loss).backward()
+                        scaler.step(optimizer)
+                        # Updates the scale for next iteration
+                        scaler.update()
+                    else:
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
+                        optimizer.step()
                     
                     # decay the learning rate based on our progress
                     if config.lr_decay:
