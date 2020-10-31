@@ -113,7 +113,7 @@ model = GPT(mconf)
 print("\nStart training of 50 epochs...\n") 
 start.record()
 
-tconf = TrainerConfig(max_epochs=50, batch_size=512, learning_rate=6e-4,
+tconf = TrainerConfig(max_epochs=40, batch_size=512, learning_rate=6e-4,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
