@@ -97,7 +97,7 @@ print("Warmup round of two epochs...")
 # make deterministic
 from mingpt.utils import set_seed
 set_seed(42)
-tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4,
+tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4, precision='AMP',
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
@@ -112,9 +112,9 @@ end = torch.cuda.Event(enable_timing=True)
 model = GPT(mconf)
 print("\nStart training of 50 epochs...\n") 
 start.record()
-max_eopchs = 50
-precision = 'AMP'
-tconf = TrainerConfig(max_epochs=max_epochs, batch_size=512, learning_rate=6e-4, percision=precision,
+max_epochs = 50
+precision = 'FP32'
+tconf = TrainerConfig(max_epochs=max_epochs, batch_size=512, learning_rate=6e-4, precision=precision,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
