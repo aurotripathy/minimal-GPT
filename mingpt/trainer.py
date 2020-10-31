@@ -57,6 +57,9 @@ class Trainer:
         torch.save(raw_model.state_dict(), self.config.ckpt_path)
 
     def train(self):
+        
+        scaler = torch.cuda.amp.GradScaler()  # Creates once at the beginning of training
+        
         model, config = self.model, self.config
         raw_model = model.module if hasattr(self.model, "module") else model
         optimizer = raw_model.configure_optimizers(config)
@@ -79,18 +82,25 @@ class Trainer:
 
                 # forward the model
                 with torch.set_grad_enabled(is_train):
-                    logits, loss = model(x, y)
-                    loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
-                    losses.append(loss.item())
+                    with torch.cuda.amp.autocast():  # cast ops in mixed precision
+                        logits, loss = model(x, y)
+                        loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
+                        losses.append(loss.item())
 
                 if is_train:
 
                     # backprop and update the parameters
                     model.zero_grad()
-                    loss.backward()
+                    # Scales the loss, and calls backward()
+                    # to create scaled gradients
+                    scaler.scale(loss).backward()
+                    # loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
-                    optimizer.step()
-
+                    # optimizer.step()
+                    scaler.step(optimizer)
+                    # Updates the scale for next iteration
+                    scaler.update()
+                    
                     # decay the learning rate based on our progress
                     if config.lr_decay:
                         self.tokens += (y >= 0).sum() # number of tokens processed this step (i.e. label is not -100)
