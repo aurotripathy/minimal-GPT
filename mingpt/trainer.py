@@ -95,7 +95,7 @@ class Trainer:
                     # to create scaled gradients
                     scaler.scale(loss).backward()
                     # loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
+                    # torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
                     # optimizer.step()
                     scaler.step(optimizer)
                     # Updates the scale for next iteration
