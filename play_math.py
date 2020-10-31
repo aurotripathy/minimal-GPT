@@ -112,8 +112,9 @@ end = torch.cuda.Event(enable_timing=True)
 model = GPT(mconf)
 print("\nStart training of 50 epochs...\n") 
 start.record()
-
-tconf = TrainerConfig(max_epochs=40, batch_size=512, learning_rate=6e-4,
+max_eopchs = 50
+precision = 'AMP'
+tconf = TrainerConfig(max_epochs=max_epochs, batch_size=512, learning_rate=6e-4, percision=precision,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
