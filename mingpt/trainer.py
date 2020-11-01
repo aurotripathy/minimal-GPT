@@ -88,6 +88,8 @@ class Trainer:
                     if config.precision == 'AMP':
                         with torch.cuda.amp.autocast():  # cast ops in mixed precision
                             logits, loss = model(x, y)
+                        assert logits.dtype is torch.float16
+                        assert loss.dtype is torch.float32
                     else:
                             logits, loss = model(x, y)
                     loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
