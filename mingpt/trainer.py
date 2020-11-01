@@ -51,7 +51,13 @@ class Trainer:
         self.device = 'cpu'
         if torch.cuda.is_available():
             self.device = torch.cuda.current_device()
-            self.model = torch.nn.DataParallel(self.model).to(self.device)
+            device_count = torch.cuda.device_count()
+            print(f'Total GPU count: {device_count}') 
+            if device_count == 1:
+                self.model = self.model.to(self.device)
+            else:
+                self.model = torch.nn.DataParallel(self.model).to(self.device)
+                
 
     def save_checkpoint(self):
         # DataParallel wrappers keep raw model object in .module attribute
@@ -60,8 +66,8 @@ class Trainer:
         torch.save(raw_model.state_dict(), self.config.ckpt_path)
 
     def train(self):
-        
-        scaler = torch.cuda.amp.GradScaler()  # Creates once at the beginning of training
+        use_amp = self.config.precision == 'AMP'
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp)  # Setup once at the beginning of training
         
         model, config = self.model, self.config
         raw_model = model.module if hasattr(self.model, "module") else model
@@ -85,29 +91,21 @@ class Trainer:
 
                 # forward the model
                 with torch.set_grad_enabled(is_train):
-                    if config.precision == 'AMP':
-                        with torch.cuda.amp.autocast():  # cast ops in mixed precision
-                            logits, loss = model(x, y)
-                        assert logits.dtype is torch.float16
-                        assert loss.dtype is torch.float32
-                    else:
+                    with torch.cuda.amp.autocast(enabled=use_amp):  # cast ops in mixed precision
                             logits, loss = model(x, y)
                     loss = loss.mean() # collapse all losses if they are scattered on multiple gpus
                     losses.append(loss.item())
 
                 if is_train:
                     model.zero_grad()
-                    if config.precision == 'AMP':
-                        # backprop and update the parameters
-                        # Scales the loss, and calls backward() to create scaled gradients
-                        scaler.scale(loss).backward()
-                        scaler.step(optimizer)
-                        # Updates the scale for next iteration
-                        scaler.update()
-                    else:
-                        loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
-                        optimizer.step()
+                    # Scale loss, call backward() to create scaled gradients
+                    scaler.scale(loss).backward()
+                    # unscale gradient, call optimizer.step()
+                    scaler.step(optimizer)
+                    # Update the scale for next iteration
+                    scaler.update()
+                    # TBD deleted 'torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)'
+
                     
                     # decay the learning rate based on our progress
                     if config.lr_decay:
