@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-# from pudb import set_trace
+from mingpt.utils import start_timer, end_timer_and_print
 
 from torch.utils.data import Dataset
 
@@ -86,7 +86,6 @@ from mingpt.model import GPT, GPTConfig, GPT1Config
 # initialize a baby GPT model
 mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size, 
                   n_layer=2, n_head=4, n_embd=128)
-# set_trace()
 model = GPT(mconf)
 
 from mingpt.trainer import Trainer, TrainerConfig
@@ -97,7 +96,7 @@ print("Warmup round of two epochs...")
 # make deterministic
 from mingpt.utils import set_seed
 set_seed(42)
-tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4, precision='AMP',
+tconf = TrainerConfig(max_epochs=2, batch_size=512, learning_rate=6e-4, precision='FP32',
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
@@ -106,25 +105,18 @@ trainer.train()
 # make deterministic
 from mingpt.utils import set_seed
 set_seed(42)
-start = torch.cuda.Event(enable_timing=True)
-end = torch.cuda.Event(enable_timing=True)
 
 model = GPT(mconf)
-print("\nStart training of 50 epochs...\n") 
-start.record()
-max_epochs = 50
-precision = 'FP32'
+max_epochs = 40
+precision = 'AMP'
+print(f"\nStart training for {max_epochs} epochs with precision {precision}...\n") 
 tconf = TrainerConfig(max_epochs=max_epochs, batch_size=512, learning_rate=6e-4, precision=precision,
                       lr_decay=True, warmup_tokens=1024, final_tokens=50*len(train_dataset)*(ndigit+1),
                       num_workers=4)
 trainer = Trainer(model, train_dataset, test_dataset, tconf)
+start_timer()
 trainer.train()
-
-end.record()
-
-torch.cuda.synchronize()  # Waits for training to finish
-
-print("Training elapsed time (in millisec):", start.elapsed_time(end))
+end_timer_and_print(f'Precision: {precision}')
 
 # now let's give the trained model an addition exam
 from torch.utils.data.dataloader import DataLoader
