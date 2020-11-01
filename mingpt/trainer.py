@@ -31,7 +31,7 @@ class TrainerConfig:
     # checkpoint settings
     ckpt_path = None
     num_workers = 0 # for DataLoader
-    presision = 'FP32'
+    precision = 'FP32'
 
     def __init__(self, **kwargs):
         if kwargs['precision'] not in ['AMP', 'FP32']:
